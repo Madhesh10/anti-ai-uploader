@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Upload documents — AntiGPT</title>
+</head>
+<body>
+  <h1>Upload documents</h1>
+
+  {% if messages %}
+    <ul>
+      {% for m in messages %}
+        <li>{{ m }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload</button>
+  </form>
+
+  <p><a href="/">Home</a> | <a href="/query/">Ask question</a> | <a href="/admin/">Admin</a></p>
+
+  {% if uploaded %}
+    <h2>Uploaded</h2>
+    <ul>
+      {% for doc in uploaded %}
+        <li>{{ doc.title }} — <a href="{{ doc.file.url }}">download</a> (status: {{ doc.status }})</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</body>
+</html>

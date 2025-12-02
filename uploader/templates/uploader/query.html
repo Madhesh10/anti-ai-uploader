@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Query</title>
+</head>
+<body>
+  <h1>Ask about your documents</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Ask</button>
+  </form>
+
+  <h2>Result</h2>
+  {% if result %}
+      <pre>{{ result }}</pre>
+  {% else %}
+      <p>No answer yet.</p>
+  {% endif %}
+
+  <p><a href="{% url 'uploader:home' %}">Home</a></p>
+</body>
+</html>

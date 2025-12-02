@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>AntiGPT - Home</title></head>
+<body>
+  <h1>AntiGPT AI Uploader</h1>
+
+  <h2>Recently uploaded</h2>
+  <ul>
+    {% for d in docs %}
+      <li>
+        <a href="{{ d.file.url }}">{{ d.file.name }}</a>
+        — uploaded at {{ d.uploaded_at }}
+      </li>
+    {% empty %}
+      <li>No documents uploaded yet.</li>
+    {% endfor %}
+  </ul>
+
+  <p><a href="{% url 'uploader:upload' %}">Upload</a> |
+     <a href="{% url 'uploader:query' %}">Ask question</a> |
+     <a href="/admin/">Admin</a>
+  </p>
+</body>
+</html>
