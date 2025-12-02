@@ -13,12 +13,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
 
-# === LOCAL DEBUG SETTINGS (DEV ONLY) ===
-# Turn on debug locally to see full tracebacks. Make sure to set DEBUG=False in production.
-DEBUG = False
+# === DEBUG & HOSTS ===
+# Locally you can run with DEBUG=True.
+# On Render, set env var DEBUG=False in the dashboard.
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Allow local hosts for development
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
+# Local + Render hosts
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "0.0.0.0",
+    ".onrender.com",  # allows anti-ai-uploader.onrender.com and other *.onrender.com
+]
+
+# Needed so POST requests from Render are not blocked by CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "https://anti-ai-uploader.onrender.com",
+    # Optional: local dev URLs
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 
 # ---------- INSTALLED APPS ----------
 INSTALLED_APPS = [
@@ -28,7 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",   # required for collectstatic & static handling
-    "uploader",                      # your app (ensure this exists)
+    "uploader",                     # your app
 ]
 
 # ---------- MIDDLEWARE ----------
@@ -47,11 +61,11 @@ MIDDLEWARE = [
 ROOT_URLCONF = "anti_ai_uploader.urls"
 WSGI_APPLICATION = "anti_ai_uploader.wsgi.application"
 
-# ---------- TEMPLATES (minimal) ----------
+# ---------- TEMPLATES ----------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # ensure this folder exists for your site-level templates
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -67,10 +81,11 @@ TEMPLATES = [
 # ---------- DATABASES ----------
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 if DATABASE_URL and dj_database_url:
-    # If you set a DATABASE_URL env var and dj_database_url is available, use it
-    DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
 else:
-    # Local SQLite default (works for dev and avoids missing ENGINE errors)
+    # Local SQLite default
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -80,17 +95,15 @@ else:
 
 # ---------- AUTH / I18N ----------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"   # <--- India time
 USE_I18N = True
 USE_TZ = True
 
 # ---------- STATIC / MEDIA ----------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# STATICFILES_DIRS should point to your project-level static folder (if used)
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Use whitenoise in production for static file serving (keeps STATICFILES_STORAGE unless USE_S3)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
@@ -99,7 +112,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Only enable S3 if explicitly asked via env
 USE_S3 = os.getenv("USE_S3", "False") == "True"
 if USE_S3:
-    # If you enable S3, make sure environment AWS vars are set and 'django-storages' is installed.
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 else:
