@@ -11,9 +11,15 @@ except Exception:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- SECURITY ----------
-# Read SECRET_KEY from env var SECRET_KEY.
-# Fallback is only for local dev.
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-unsafe-key-change-this")
+# Robust SECRET_KEY handling: if env var is missing OR empty,
+# use a local dev fallback.
+_env_secret = os.getenv("SECRET_KEY", "").strip()
+
+if _env_secret:
+    SECRET_KEY = _env_secret
+else:
+    # only for local development – change in real production if you want
+    SECRET_KEY = "dev-unsafe-key-change-this"
 
 # DEBUG: False in production, True on your laptop
 DEBUG = os.getenv("DEBUG", "True") == "True"
