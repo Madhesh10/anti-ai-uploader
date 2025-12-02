@@ -11,7 +11,7 @@ except Exception:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
 
 # === DEBUG & HOSTS ===
 # Locally you can run with DEBUG=True.
