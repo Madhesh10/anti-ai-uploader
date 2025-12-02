@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
 
 # === LOCAL DEBUG SETTINGS (DEV ONLY) ===
 # Turn on debug locally to see full tracebacks. Make sure to set DEBUG=False in production.
-DEBUG = True
+DEBUG = False
 
 # Allow local hosts for development
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
