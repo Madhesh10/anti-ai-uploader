@@ -10,28 +10,24 @@ except Exception:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY
-SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
+# ---------- SECURITY ----------
+# Read SECRET_KEY from env var SECRET_KEY.
+# Fallback is only for local dev.
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-unsafe-key-change-this")
 
-# === DEBUG & HOSTS ===
-# Locally you can run with DEBUG=True.
-# On Render, set env var DEBUG=False in the dashboard.
+# DEBUG: False in production, True on your laptop
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Local + Render hosts
+# Allow local dev + any Render app domain
 ALLOWED_HOSTS = [
-    "127.0.0.1",
     "localhost",
-    "0.0.0.0",
-    ".onrender.com",  # allows anti-ai-uploader.onrender.com and other *.onrender.com
+    "127.0.0.1",
+    ".onrender.com",  # anti-ai-uploader.onrender.com
 ]
 
-# Needed so POST requests from Render are not blocked by CSRF
+# Trust your Render origin for CSRF
 CSRF_TRUSTED_ORIGINS = [
     "https://anti-ai-uploader.onrender.com",
-    # Optional: local dev URLs
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
 ]
 
 # ---------- INSTALLED APPS ----------
@@ -41,14 +37,14 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",   # required for collectstatic & static handling
-    "uploader",                     # your app
+    "django.contrib.staticfiles",
+    "uploader",
 ]
 
 # ---------- MIDDLEWARE ----------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # serve static files in production
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -85,7 +81,6 @@ if DATABASE_URL and dj_database_url:
         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
 else:
-    # Local SQLite default
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -93,9 +88,9 @@ else:
         }
     }
 
-# ---------- AUTH / I18N ----------
+# ---------- I18N / TIME ----------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Kolkata"   # <--- India time
+TIME_ZONE = "Asia/Kolkata"   # India time
 USE_I18N = True
 USE_TZ = True
 
@@ -109,7 +104,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Only enable S3 if explicitly asked via env
+# Optional S3 config (off by default)
 USE_S3 = os.getenv("USE_S3", "False") == "True"
 if USE_S3:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
