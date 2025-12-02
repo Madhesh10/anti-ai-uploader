@@ -11,18 +11,17 @@ except Exception:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- SECURITY ----------
-# Robust SECRET_KEY handling: if env var is missing OR empty,
-# use a local dev fallback.
-_env_secret = os.getenv("SECRET_KEY", "").strip()
 
+# Read SECRET_KEY from env. If missing or empty, fall back to a local dev key.
+_env_secret = os.getenv("SECRET_KEY", "").strip()
 if _env_secret:
     SECRET_KEY = _env_secret
 else:
-    # only for local development – change in real production if you want
+    # Only for local development – DO NOT use this in real production.
     SECRET_KEY = "dev-unsafe-key-change-this"
 
-# DEBUG: False in production, True on your laptop
-DEBUG = os.getenv("DEBUG", "True") == "True"
+# DEBUG: False in production (Render), True on your laptop
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 # Allow local dev + any Render app domain
 ALLOWED_HOSTS = [
@@ -110,8 +109,8 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Optional S3 config (off by default)
-USE_S3 = os.getenv("USE_S3", "False") == "True"
+# ---------- FILE STORAGE (optional S3) ----------
+USE_S3 = os.getenv("USE_S3", "False").lower() == "true"
 if USE_S3:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
