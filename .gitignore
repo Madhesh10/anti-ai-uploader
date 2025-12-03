@@ -1,22 +1,4 @@
-﻿__pycache__/
-*.pyc
-*.pyo
-
-db.sqlite3
-/staticfiles/
-/media/
-
-venv/
-.venv/
-.env
-
-*.log
-*.exe
-*.dll
-.DS_Store
-
-# .gitignore (add these lines)
-venv/
+﻿venv/
 .venv/
 __pycache__/
 *.pyc
