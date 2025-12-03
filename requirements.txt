@@ -1,8 +1,11 @@
-﻿Django>=4.2,<5
+﻿# Web / Django app essentials (Render-friendly)
+Django>=4.2,<5
 gunicorn
+requests==2.31.0
 whitenoise==6.5.0
 dj-database-url
-requests
 python-dotenv
-pymongo==4.4.0   # remove if you don't use MongoDB
-dnspython==2.3.0 # only needed when using mongodb+srv URIs
+
+# MongoDB (only if your app uses MongoDB; remove if not)
+pymongo==4.4.0
+dnspython==2.3.0
