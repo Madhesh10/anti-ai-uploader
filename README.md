@@ -1,201 +1,163 @@
+🛡️ Anti-AI Uploader
+Document Question Answering System (Django + DeepSeek API)
 
-# 🛡️ Anti-AI Uploader  
-### Document Question-Answering System (Django + DeepSeek API)
+🔗 Live Demo:
+👉 https://anti-ai-uploader.onrender.com/
 
-Anti-AI Uploader is a **Document Intelligence Web Application** built using  
-**Python, Django, DeepSeek API, and Render hosting**.  
-Users can upload documents and ask questions, and the system intelligently answers based only on the document’s content.
+The Anti-AI Uploader is a Django-based application that allows users to upload documents (PDF, DOCX, TXT, XLSX) and then ask questions about the content.
+The system extracts text from the files, sends the text + question to the DeepSeek API, and generates context-aware answers.
 
-This project acts like a **personal AI analyst** — useful for resumes, reports, academic papers, legal documents, corporate files, and more.
+This project demonstrates a clean, production-ready workflow for building AI-powered document intelligence using Python, Django, and DeepSeek.
 
----
+🚀 Features
+✔️ Multi-Document Upload
 
-## 🚀 Features
-
-### 📄 **1. Multi-File Upload System**
 Supports:
-- PDF  
-- DOCX  
-- TXT  
-- Excel (XLSX)  
-- Other text-based files  
 
-### 🔍 **2. Automatic Text Extraction**
-Uses:
-- `pdfplumber` — PDF parsing  
-- `python-docx` — DOCX reading  
-- `openpyxl` — Excel sheet extraction  
-- Built-in fallback for plain text files  
+PDF (pdfplumber)
 
-### 🤖 **3. DeepSeek AI Question Answering**
-The app sends extracted text + user query to DeepSeek:
+DOCX (python-docx)
 
-- Fast API responses  
-- No OpenAI dependency  
-- Only answers using document context  
+TXT
 
-### 🌐 **4. Django Backend**
-- Django views for upload & processing  
-- Secure file handling  
-- Clean, maintainable code structure  
+Excel (.xlsx) (openpyxl)
 
-### ☁️ **5. Render Deployment Support**
-This project includes:
-- `requirements.txt` ready for deployment  
-- `Procfile` + `start.sh` for migrations  
-- Environment variable–based configuration  
-- Static file support via WhiteNoise  
+✔️ Automatic Text Extraction
 
-Works on the **free Render tier**.
+Each file type is processed with the correct library:
 
----
+PDF → pdfplumber
 
-## 🗂️ Project Structure
+DOCX → python-docx
 
-```
+XLSX → openpyxl
 
-Anti-AI-Uploader/
-│── anti_ai_uploader/      # Django project settings
-│── uploader/              # Main application logic
-│   ├── views.py
-│   ├── deepseek_utils.py  # API integration & text extraction
-│   ├── templates/
-│── static/
-│── templates/
-│── requirements.txt
-│── Procfile
-│── start.sh
+TXT → decoded text
 
-```
+✔️ DeepSeek API Integration
 
----
+The app sends your question + extracted document context to:
 
-## 🔑 Environment Variables (Render / Local)
+POST https://api.deepseek.com/v1/chat/completions
 
-Create a `.env` file or set in Render dashboard:
 
-```
+and retrieves the answer.
 
-SECRET_KEY=your-django-secret-key
+✔️ Clean Django UI
+
+Simple upload page
+
+Ask questions about uploaded content
+
+Shows formatted AI responses
+
+✔️ Production Ready
+
+Runs on Render.com
+
+Uses Gunicorn + WhiteNoise for serving static files
+
+Environment variables (SECRET_KEY, API key) managed securely
+
+Supports .env locally
+
+🗂️ Project Structure
+Anti AI Uploader/
+│
+├── anti_ai_uploader/        # Django project settings
+├── uploader/                # App: views, utils, templates
+│   ├── deepseek_utils.py    # API integration + text extraction
+│   └── templates/
+│
+├── static/                  # CSS, JS files
+├── templates/               # Base UI
+│
+├── requirements.txt
+├── Procfile                 # For Render deployment
+├── start.sh                 # Migration + Gunicorn startup
+└── README.md
+
+⚙️ Tech Stack
+Component	Technology
+Backend	Django 4.x
+AI Model	DeepSeek API (deepseek-chat)
+File Parsing	pdfplumber, python-docx, openpyxl
+Server	Render Web Service
+Static Files	WhiteNoise
+Deployment	Gunicorn + Procfile
+🔧 Installation (Local Development)
+1️⃣ Clone the repo
+git clone https://github.com/<your-username>/anti-ai-uploader.git
+cd anti-ai-uploader
+
+2️⃣ Create virtual env
+python -m venv venv
+venv\Scripts\activate   # Windows
+
+3️⃣ Install dependencies
+pip install -r requirements.txt
+
+4️⃣ Add environment variables
+
+Create .env:
+
+SECRET_KEY=your-secret-key
+DEEPSEEK_API_KEY=your-api-key
+DEBUG=True
+
+5️⃣ Run locally
+python manage.py runserver
+
+
+Now open:
+👉 http://127.0.0.1:8000/
+
+🚀 Deploy on Render
+Required environment variables:
+SECRET_KEY=your-secret-key
+DEEPSEEK_API_KEY=your-real-key
 DEBUG=False
-DEEPSEEK_API_KEY=your-deepseek-api-key
 ALLOWED_HOSTS=.onrender.com,localhost,127.0.0.1
 
-```
+Required files:
 
----
+Procfile
 
-## 🧠 How It Works
-
-### 1️⃣ Upload a document  
-User uploads any supported file.
-
-### 2️⃣ Text is extracted  
-Using the correct parser depending on file type.
-
-### 3️⃣ User asks a question  
-The system prepares:
-
-```
-
-Context: <extracted-text>
-
-Question: <user-question>
-
-````
-
-### 4️⃣ DeepSeek API responds  
-Your AI assistant answers only using document content.
-
----
-
-## ▶️ Local Development
-
-### Install dependencies:
-```bash
-pip install -r requirements.txt
-````
-
-### Run the server:
-
-```bash
-python manage.py runserver
-```
-
----
-
-## ☁️ Deployment on Render
-
-### 1️⃣ Push project to GitHub
-
-Render pulls from your repository.
-
-### 2️⃣ Add environment variables
-
-SECRET_KEY, DEEPSEEK_API_KEY, DEBUG, ALLOWED_HOSTS.
-
-### 3️⃣ Auto-deploy
-
-Render builds and launches Gunicorn using:
-
-```
 web: bash ./start.sh
-```
-
-### 4️⃣ Visit your live URL
-
-Your app works instantly on Render free tier.
-
----
-
-## 🧩 Dependencies
-
-```
-Django
-gunicorn
-whitenoise
-requests
-pdfplumber
-python-docx
-openpyxl
-python-dotenv
-dj-database-url
-```
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome!
-For major changes, please open an issue first.
-
----
-
-## 📜 License
-
-This project is released under the **MIT License**.
-
----
-
-## ❤️ Author
-
-**Madhesh SR**
 
 
----
+start.sh
 
-# ⭐ If you like this project, give it a star on GitHub!
+#!/usr/bin/env bash
+set -e
+python manage.py migrate --noinput
+exec gunicorn anti_ai_uploader.wsgi:application --bind 0.0.0.0:$PORT
 
-```
 
----
+Upload project → Render will auto build and deploy.
 
-If you want, I can also:
+🧠 How the AI Response Works
 
-✅ Design a professional **project logo**  
-✅ Create a **screenshots section** for README  
-✅ Add **API documentation**  
-✅ Make README more advanced with architecture diagrams  
+User uploads file(s)
 
-Just tell me!
-```
+Text extracted from each file
+
+User enters a question
+
+App sends:
+
+Context: <document text>
+Question: <your question>
+
+
+to DeepSeek API
+5. Returns context-aware, accurate answers.
+
+
+
+📌 Author
+
+Madhesh SR
+
+Email: madhesh704@gmail.com
+
