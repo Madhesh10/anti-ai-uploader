@@ -1,10 +1,10 @@
-﻿Django>=4.2,<5
+﻿# Minimal requirements for a Django web app on Render
+Django>=4.2,<5
 gunicorn
-requests==2.31.0
-whitenoise==6.5.0
+whitenoise>=6.0.0
 dj-database-url
+requests
 python-dotenv
-
-# MongoDB (remove if you don't use it)
-pymongo==4.4.0
-dnspython==2.3.0
+python-docx      # docx reader used in your deepseek_utils
+pymongo>=4.0      # keep if you use MongoDB, optional
+dnspython         # needed for mongodb+srv URIs if using Atlas
