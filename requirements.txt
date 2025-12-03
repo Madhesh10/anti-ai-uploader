@@ -1,30 +1,10 @@
-﻿# requirements.txt — minimal web requirements
-Django==4.2
-gunicorn==23.0.0
-whitenoise==6.5.0
-dj-database-url==1.0.0
-requests==2.31.0
-python-dotenv==1.0.0
-pdfplumber==0.9.0
-pymongo==4.4.0     # only if you use Mongo (can remove otherwise)
-# remove heavy local/ML packages (onnxruntime, open-webui, faiss, ctranslate2, etc.)
-# requirements.txt — minimal for a Django app on Render
+﻿# minimal for Django app on Render
 Django==4.2.*
 gunicorn==23.0.0
 whitenoise==6.5.0
 dj-database-url==1.0.0
 requests==2.31.0
 python-dotenv==1.0.0
+pdfplumber==0.9.0
 python-docx==0.8.11
-pymongo==4.4.0        # only if you use MongoDB
-dnspython==2.3.0      # only for mongodb+srv URIs
-Django>=4.2,<5
-gunicorn
-whitenoise==6.5.0
-dj-database-url
-requests==2.31.0
-python-dotenv
-pymongo==4.4.0
-openpyxl
-pdfplumber
-python-docx
+openpyxl==3.1.2
