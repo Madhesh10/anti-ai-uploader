@@ -11,29 +11,22 @@ except Exception:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- SECURITY ----------
+# SECRET_KEY: read from env, fallback to a local dev key
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-unsafe-key-change-this")
 
-# Read SECRET_KEY from env. If missing or empty, fall back to a local dev key.
-_env_secret = os.getenv("SECRET_KEY", "").strip()
-if _env_secret:
-    SECRET_KEY = _env_secret
-else:
-    # Only for local development – DO NOT use this in real production.
-    SECRET_KEY = "dev-unsafe-key-change-this"
+# DEBUG: read from env as string and convert to boolean
+# Use "True" (capital T) to enable debug on purpose. Default is False for safety.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-# DEBUG: False in production (Render), True on your laptop
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+# read ALLOWED_HOSTS from env var (comma separated), fallback to sensible defaults
+_raw_hosts = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.onrender.com")
+ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
 
-# Allow local dev + any Render app domain
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    ".onrender.com",  # anti-ai-uploader.onrender.com
-]
-
-# Trust your Render origin for CSRF
-CSRF_TRUSTED_ORIGINS = [
-    "https://anti-ai-uploader.onrender.com",
-]
+# CSRF trusted origins — also allow setting via env var (comma separated)
+_csrf_origins = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS", "https://anti-ai-uploader.onrender.com"
+)
+CSRF_TRUSTED_ORIGINS = [u.strip() for u in _csrf_origins.split(",") if u.strip()]
 
 # ---------- INSTALLED APPS ----------
 INSTALLED_APPS = [
@@ -49,7 +42,8 @@ INSTALLED_APPS = [
 # ---------- MIDDLEWARE ----------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # static files in production
+    # WhiteNoise is present to serve static files in production
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -95,7 +89,7 @@ else:
 
 # ---------- I18N / TIME ----------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Kolkata"   # India time
+TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
@@ -104,6 +98,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+# WhiteNoise compressed manifest storage (works with `collectstatic`)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
