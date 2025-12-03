@@ -1,31 +1,47 @@
 # uploader/deepseek_utils.py
-
 import os
 import json
-import requests
+import logging
 from io import BytesIO
+
+import requests
 from docx import Document as DocxReader
 import pdfplumber
 import openpyxl
 
-# ---------------- DeepSeek config ----------------
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+# ---------------- DeepSeek config (read-from-env when used) ----------------
 DEEPSEEK_BASE = os.getenv("DEEPSEEK_BASE", "https://api.deepseek.com")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+DEFAULT_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
+
+def _get_key():
+    """Return the DEEPSEEK_API_KEY from environment (or None)."""
+    return os.getenv("DEEPSEEK_API_KEY")
+
+
+def _mask_key(key: str | None) -> str:
+    if not key:
+        return "<NONE>"
+    if len(key) <= 10:
+        return key[:3] + "..." + key[-3:]
+    return key[:6] + "..." + key[-4:]
 
 
 def _require_key():
-    if not DEEPSEEK_API_KEY:
-        raise RuntimeError("DEEPSEEK_API_KEY not set in environment")
+    if not _get_key():
+        raise RuntimeError(
+            "DEEPSEEK_API_KEY not set. Add it to Render environment variables or local .env."
+        )
 
 
 # ---------------- TEXT EXTRACTION ----------------
 def extract_text_from_file(file_or_path):
     """
-    Supports:
-      - Django UploadedFile objects
-      - plain file paths (str)
-    Returns extracted text as a string.
+    Supports UploadedFile objects and file paths (str).
+    Returns text (string).
     """
     # get bytes + name
     if isinstance(file_or_path, str):
@@ -33,7 +49,6 @@ def extract_text_from_file(file_or_path):
             b = fh.read()
         name = file_or_path.lower()
     else:
-        # UploadedFile-like
         try:
             file_or_path.seek(0)
         except Exception:
@@ -78,52 +93,53 @@ def extract_text_from_file(file_or_path):
 
 
 # ---------------- OPTIONAL: upload file to DeepSeek ----------------
-def upload_file_to_deepseek(file_bytes, filename, metadata=None):
+def upload_file_to_deepseek(file_bytes, filename, metadata=None, timeout=30):
     """
-    Best-effort file upload. If DeepSeek account doesn't support this,
-    it will just return an error dict but NOT crash your app.
+    Upload file to DeepSeek. Returns dict:
+      - success: JSON response from DeepSeek
+      - error: {error info}
     """
-    _require_key()
+    key = _get_key()
+    if not key:
+        return {"error": "no_api_key", "message": "DEEPSEEK_API_KEY not set"}
 
     url = f"{DEEPSEEK_BASE}/v1/files"
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+    headers = {"Authorization": f"Bearer {key}"}
     files = {"file": (filename, file_bytes)}
     data = {"purpose": "rag", "metadata": json.dumps(metadata or {})}
 
     try:
-        r = requests.post(url, headers=headers, files=files, data=data, timeout=30)
+        r = requests.post(url, headers=headers, files=files, data=data, timeout=timeout)
     except requests.RequestException as e:
-        return {"error": f"request_failed: {e}", "endpoint": url}
+        logger.exception("upload_file_to_deepseek request failed")
+        return {"error": "request_failed", "message": str(e), "endpoint": url}
 
     if r.status_code >= 400:
-        try:
-            body = r.json()
-        except Exception:
-            body = r.text
-        return {"error": f"{r.status_code} {r.reason}", "body": body, "endpoint": url}
+        body = _safe_json(r)
+        return {
+            "error": f"{r.status_code} {r.reason}",
+            "body": body,
+            "endpoint": url,
+        }
 
-    try:
-        return r.json()
-    except Exception:
-        return {"error": "invalid_json", "body": r.text, "endpoint": url}
+    return _safe_json(r)
 
 
 # ---------------- MAIN: ask DeepSeek with chat completions ----------------
-def ask_deepseek(question, context=None, timeout=20):
+def ask_deepseek(question, context=None, model=None, timeout=20):
     """
-    Call DeepSeek chat model.
-
-    question: user question (string)
-    context: long text from your uploaded documents (string, optional)
-    Returns a dict:
-      - {"result": "<answer text>", "raw": <full_json>}
+    Call DeepSeek chat model and return dict:
+      - {"result": "<text>", "raw": <full_json>}
       - or {"error": "...", ...}
     """
-    _require_key()
+    key = _get_key()
+    if not key:
+        return {"error": "no_api_key", "message": "DEEPSEEK_API_KEY not set"}
 
+    model = model or DEFAULT_MODEL
     url = f"{DEEPSEEK_BASE}/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
     }
 
@@ -133,7 +149,7 @@ def ask_deepseek(question, context=None, timeout=20):
         user_content = question
 
     payload = {
-        "model": DEEPSEEK_MODEL,
+        "model": model,
         "messages": [
             {
                 "role": "system",
@@ -146,31 +162,71 @@ def ask_deepseek(question, context=None, timeout=20):
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=timeout)
     except requests.RequestException as e:
-        return {"error": f"request_failed: {e}", "endpoint": url}
+        logger.exception("ask_deepseek request failed")
+        return {"error": "request_failed", "message": str(e), "endpoint": url}
 
     if r.status_code >= 400:
-        try:
-            body = r.json()
-        except Exception:
-            body = r.text
+        body = _safe_json(r)
         return {"error": f"{r.status_code} {r.reason}", "body": body, "endpoint": url}
 
+    data = _safe_json(r)
+    if isinstance(data, dict):
+        assistant_text = _extract_assistant_text(data)
+        if assistant_text:
+            return {"result": assistant_text, "raw": data}
+        else:
+            return {"error": "no_text_in_response", "raw": data}
+    else:
+        return {"error": "invalid_json", "body": data}
+
+
+def _safe_json(response):
+    """Return response.json() safely, fallback to text."""
     try:
-        data = r.json()
+        return response.json()
     except Exception:
-        return {"error": "invalid_json", "body": r.text}
+        return {"text": response.text}
 
-    # extract assistant text
-    assistant_text = None
+
+def _extract_assistant_text(data):
+    """Try standard deepseek / openai-like response shapes."""
     try:
-        assistant_text = data["choices"][0]["message"]["content"]
+        choices = data.get("choices")
+        if not choices:
+            return None
+        first = choices[0]
+        # modern shape: choices[0]["message"]["content"]
+        msg = first.get("message")
+        if msg and "content" in msg:
+            return msg["content"]
+        # fallback shape: choices[0].get("text")
+        if "text" in first:
+            return first.get("text")
     except Exception:
-        try:
-            assistant_text = data["choices"][0].get("text")
-        except Exception:
-            assistant_text = None
+        return None
+    return None
 
-    if assistant_text:
-        return {"result": assistant_text, "raw": data}
 
-    return {"error": "no_text_in_response", "raw": data}
+# ---------------- Helper: verify key (for quick local tests) ----------------
+def verify_key(timeout=10):
+    """
+    Quick verification helper: attempts a minimal request to check the key.
+    Returns {'ok': True} on success or error dict on failure.
+    """
+    key = _get_key()
+    if not key:
+        return {"ok": False, "error": "no_api_key"}
+
+    url = f"{DEEPSEEK_BASE}/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {"model": DEFAULT_MODEL, "messages": [{"role": "user", "content": "ping"}]}
+
+    try:
+        r = requests.post(url, headers=headers, json=payload, timeout=timeout)
+    except requests.RequestException as e:
+        return {"ok": False, "error": "request_failed", "message": str(e)}
+
+    if r.status_code == 200:
+        return {"ok": True, "status_code": 200}
+    else:
+        return {"ok": False, "status_code": r.status_code, "body": _safe_json(r)}
