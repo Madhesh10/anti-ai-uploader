@@ -19,9 +19,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-unsafe-key-change-this")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 # read ALLOWED_HOSTS from env var (comma separated), fallback to sensible defaults
-_raw_hosts = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.onrender.com")
-ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
-
+raw_hosts = os.environ.get("ALLOWED_HOSTS", ".onrender.com,localhost,127.0.0.1")
+ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
 # CSRF trusted origins — also allow setting via env var (comma separated)
 _csrf_origins = os.environ.get(
     "CSRF_TRUSTED_ORIGINS", "https://anti-ai-uploader.onrender.com"
