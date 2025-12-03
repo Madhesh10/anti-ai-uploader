@@ -1,6 +1,8 @@
 ﻿Django>=4.2,<5
 gunicorn
-whitenoise==6.5.0
+whitenoise
 dj-database-url
-pymongo
+requests
 python-dotenv
+pymongo==4.4.0         # if you use MongoDB
+dnspython==2.3.0       # if using Mongo+srv URIs for MongoDB
